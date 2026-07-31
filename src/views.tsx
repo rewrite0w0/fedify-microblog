@@ -1,5 +1,21 @@
 import type { FC } from "hono/jsx";
 
+export interface ProfileProps {
+  name: string;
+  handle: string;
+}
+
+export const Profile: FC<ProfileProps> = ({ name, handle }) => {
+  return (
+    <>
+      <hgroup>
+        <h1>{name}</h1>
+        <p style="user-select: all;">{handle}</p>
+      </hgroup>
+    </>
+  );
+};
+
 export const Layout: FC = (props) => (
   <html lang="en">
     <head>
