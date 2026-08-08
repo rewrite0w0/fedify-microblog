@@ -28,7 +28,7 @@ export const Layout: FC = (props) => (
   </html>
 );
 
-export const Setup: FC = () => (
+export const SetupForm: FC = () => (
   <>
     <h1>Set up your microblog</h1>
     <form method="post" action="/setup">
@@ -36,6 +36,9 @@ export const Setup: FC = () => (
         <label>
           Username{" "}
           <input type="text" name="username" required maxlength={50} pattern="^[a-z0-9_\-]+$" />
+        </label>
+        <label>
+          Name <input type="text" name="name" required />
         </label>
       </fieldset>
       <input type="submit" value="Setup" />
