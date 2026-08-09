@@ -32,4 +32,13 @@ CREATE TABLE IF NOT EXISTS keys (
   public_key TEXT NOT NULL CHECK (public_key <> ''),
   created TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP) CHECK (created <> ''),
   PRIMARY KEY (user_id, type)
-  )
+  );
+
+CREATE TABLE IF NOT EXISTS follows (
+  following_id INTEGER REFERENCES actors (id),
+  follower_id INTEGER REFERENCES actors (id),
+  created TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+                        CHECK (created <> ''),
+  PRIMARY KEY (following_id, follower_id)
+  );
+
