@@ -1,17 +1,71 @@
 import type { FC } from "hono/jsx";
+import type { Actor } from "./schema.ts";
 
 export interface ProfileProps {
   name: string;
+  username: string;
   handle: string;
+  followers: number;
 }
 
-export const Profile: FC<ProfileProps> = ({ name, handle }) => {
+export interface FollowerListProps {
+  followers: Actor[];
+}
+
+export const FollowerList: FC<FollowerListProps> = ({ followers }) => (
+  <>
+    <h2>Followers</h2>
+    <ul>
+      {followers.map((follower) => (
+        <li key={follower.id}>
+          <ActorLink actor={follower} />
+        </li>
+      ))}
+    </ul>
+  </>
+);
+
+export interface ActorLinkProps {
+  actor: Actor;
+}
+
+export const ActorLink: FC<ActorLinkProps> = ({ actor }) => {
+  const href = actor.url ?? actor.uri;
+  return actor.name == null ? (
+    <a href="">{actor.handle}</a>
+  ) : (
+    <>
+      <a href={href}>{actor.name}</a>{" "}
+      <small>
+        (
+        <a href={href} class="secondary">
+          {actor.handle}
+        </a>
+        )
+      </small>
+    </>
+  );
+};
+
+export const Profile: FC<ProfileProps> = ({
+  name,
+  handle,
+  username,
+  followers,
+}) => {
   return (
     <>
       <hgroup>
-        <h1>{name}</h1>
-        <p style="user-select: all;">{handle}</p>
-      </hgroup>
+        <h1>
+          <a href={`/users/${username}`}>{name}</a>
+        </h1>
+        <p>
+          <span style="user-select: all;">{handle}</span> &middot;{" "}
+          <a href={`/users/${username}/followers`}>
+            {followers === 1 ? "1 follower" : `${followers} followers`}
+          </a>
+        </p>
+      </hgroup>{" "}
     </>
   );
 };
@@ -22,7 +76,10 @@ export const Layout: FC = (props) => (
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>title</title>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+      />
     </head>
     <body>{props.children}</body>
   </html>
@@ -35,7 +92,13 @@ export const SetupForm: FC = () => (
       <fieldset>
         <label>
           Username{" "}
-          <input type="text" name="username" required maxlength={50} pattern="^[a-z0-9_\-]+$" />
+          <input
+            type="text"
+            name="username"
+            required
+            maxlength={50}
+            pattern="^[a-z0-9_\-]+$"
+          />
         </label>
         <label>
           Name <input type="text" name="name" required />

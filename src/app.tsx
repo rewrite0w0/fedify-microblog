@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { federation } from "@fedify/hono";
 import fedi from "./federation.ts";
-import { Layout, SetupForm, Profile } from "./views";
+import { Layout, SetupForm, Profile, FollowerList } from "./views";
 import db from "./db.ts";
 import type { Actor, User } from "./schema.ts";
 
@@ -22,15 +22,14 @@ app.get("/setup", (c) => {
     if (user != null) {
       return c.redirect("/");
     }
-  return c.html(
-    <Layout>
-      <SetupForm />
-    </Layout>,
-  );
-
+    return c.html(
+      <Layout>
+        <SetupForm />
+      </Layout>,
+    );
   } catch (e) {
     console.error(e);
-    return c.text(e)
+    return c.text(e);
   }
 });
 
@@ -85,7 +84,7 @@ app.post("/setup", async (c) => {
     return c.redirect("/");
   } catch (e) {
     console.error(e);
-    return c.text(e)
+    return c.text(e);
   }
 });
 
@@ -99,24 +98,62 @@ app.get("/users/:username", async (c) => {
                                          `)
       .get(c.req.param("username"));
 
-    if (user == null) {
-      return c.notFound;
-    }
+    if (user == null) return c.notFound;
+
+    const { followers } = db
+      .prepare<unknown[], { followers: number }>(
+        `
+      SELECT count(*) AS followers
+      FROM follows
+      JOIN actors ON follows.following_id = actors.id
+      WHERE actors.user_id = ?
+      `,
+      )
+      .get(user.id)!;
 
     const url = new URL(c.req.url);
     const handle = `@${user.username}@${url.host}`;
 
-
-  return c.html(
-    <Layout>
-      <Profile name={user.name ?? user.username} handle={handle} />
-    </Layout>,
-  );
+    return c.html(
+      <Layout>
+        <Profile
+          name={user.name ?? user.username}
+          username={user.username}
+          handle={handle}
+          followers={followers}
+        />
+      </Layout>,
+    );
   } catch (e) {
     console.error(e);
-    return c.text(e)
+    return c.text(e);
   }
+});
 
+app.get("/users/:username/followers", async (c) => {
+  try {
+    const followers = db
+      .prepare<unknown[], Actor>(
+        `
+      SELECT followers.*
+      FROM follows
+      JOIN actors AS followers ON follows.follower_id = followers.id
+      JOIN actors AS following ON follows.following_id = following.id
+      JOIN users ON users.id = following.user_id
+      WHERE users.username = ?
+      ORDER BY follows.created DESC
+      `,
+      )
+      .all(c.req.param("username"));
+    return c.html(
+      <Layout>
+        <FollowerList followers={followers} />
+      </Layout>,
+    );
+  } catch (e) {
+    console.error(e);
+    return <>{e}</>;
+  }
 });
 
 export default app;
